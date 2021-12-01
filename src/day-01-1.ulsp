@@ -1,0 +1,19 @@
+(import input.01)
+
+(function get-input ()
+  (let (input (trim input.01/input)
+        lines (split "\n" input))
+    (map (fn (line) 
+           (to-number (trim line)))
+      lines)))
+
+(let (numbers (get-input)
+      starting-depth (first numbers)
+      depths (rest numbers)
+      increasing-depths (filter (fn (x i arr)
+                                  (> x (or (get arr (- i 1))
+                                           starting-depth)))
+                          depths))
+  
+  (print 
+    (length increasing-depths)))

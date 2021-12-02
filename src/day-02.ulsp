@@ -16,6 +16,8 @@
                           amount)}))
       lines)))
 
+
+; Part 1
 (let (instructions (get-input)
       position {:vertical 0 :horizontal 0})
   (map (fn (instruction)
@@ -25,6 +27,26 @@
            (hashmap-set position 
                         direction
                         (+ quantity current))))
+    instructions)
+  (print "Position: " position ", combined: " (* (hashmap-get position :vertical)
+                                                 (hashmap-get position :horizontal))))
+
+
+; Part 2
+(let (instructions (get-input)
+      position {:vertical 0 :horizontal 0 :aim 0})
+  (map (fn (instruction)
+         (let (direction (hashmap-get instruction :direction)
+               quantity (hashmap-get instruction :quantity))
+           (if (== direction :vertical)
+             (hashmap-set position :aim (+ (hashmap-get position :aim)
+                                           quantity))
+             (do
+               (hashmap-set position :horizontal (+ (hashmap-get position :horizontal)
+                                                    quantity))
+               (hashmap-set position :vertical (+ (hashmap-get position :vertical)
+                                                  (* (hashmap-get position :aim)
+                                                     quantity)))))))
     instructions)
   (print "Position: " position ", combined: " (* (hashmap-get position :vertical)
                                                  (hashmap-get position :horizontal))))

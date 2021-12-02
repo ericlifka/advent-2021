@@ -1,0 +1,30 @@
+(import input.02)
+
+
+(function get-input ()
+  (let (input (trim input.02/input)
+        lines (split "\n" input))
+    (map (fn (line)
+           (let (parts (split " " (trim line))
+                 direction (get parts 0)
+                 amount (to-number (get parts 1)))
+             {:direction (if (== direction "forward")
+                           :horizontal
+                           :vertical)
+              :quantity (if (== direction "up")
+                          (* -1 amount)
+                          amount)}))
+      lines)))
+
+(let (instructions (get-input)
+      position {:vertical 0 :horizontal 0})
+  (map (fn (instruction)
+         (let (direction (hashmap-get instruction :direction)
+               quantity (hashmap-get instruction :quantity)
+               current (hashmap-get position direction))
+           (hashmap-set position 
+                        direction
+                        (+ quantity current))))
+    instructions)
+  (print "Position: " position ", combined: " (* (hashmap-get position :vertical)
+                                                 (hashmap-get position :horizontal))))

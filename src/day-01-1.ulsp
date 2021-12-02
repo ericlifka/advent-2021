@@ -1,5 +1,6 @@
 (import input.01)
 
+
 (function get-input ()
   (let (input (trim input.01/input)
         lines (split "\n" input))
@@ -15,5 +16,29 @@
                                            starting-depth)))
                           depths))
   
-  (print 
+  (print "Part 1: "
     (length increasing-depths)))
+
+
+(let (numbers (get-input)
+      running-sums 
+          (map (fn (_ i arr)
+                 (let (n0 (get arr i)
+                       n1 (get arr (+ 1 i))
+                       n2 (get arr (+ 2 i)))
+                   (if (or (is-null n0) (is-null n1) (is-null n2)) null
+                     (+ n0 n1 n2))))
+               numbers)
+               
+      increasing 
+          (map (fn (_ i arr)
+                  (let (n0 (get arr i)
+                        n1 (get arr (+ 1 i)))
+                    (and (not-null n0) 
+                         (not-null n1)
+                         (> n1 n0))))
+               running-sums))
+
+    (print "Part 2: "
+      (length (filter (fn (x) x)
+                increasing))))

@@ -1,5 +1,5 @@
 (module input.01
-  (set input "
+  (declare input "
 191
 185
 188

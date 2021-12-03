@@ -7,46 +7,62 @@
     (map (fn (line)
            (let (parts (split " " (trim line))
                  direction (get parts 0)
-                 amount (to-number (get parts 1)))
-             {:direction (if (== direction "forward")
-                           :horizontal
-                           :vertical)
-              :quantity (if (== direction "up")
-                          (* -1 amount)
-                          amount)}))
+                 amount (to-number (get parts 1))
+                 instruction {:direction (if (== direction "forward")
+                                           :horizontal
+                                           :vertical)
+                              :quantity (if (== direction "up")
+                                          (* -1 amount)
+                                          amount)})
+             instruction))
       lines)))
 
+(function print-results (part position)
+  (print "\n" part
+         "\n  Position: " position 
+         "\n  combined: " (* (get position :vertical)
+                           (get position :horizontal))))
 
 ; Part 1
-(let (instructions (get-input)
-      position {:vertical 0 :horizontal 0})
-  (map (fn (instruction)
-         (let (direction (hashmap-get instruction :direction)
-               quantity (hashmap-get instruction :quantity)
-               current (hashmap-get position direction))
-           (hashmap-set position 
-                        direction
-                        (+ quantity current))))
-    instructions)
-  (print "Position: " position ", combined: " (* (hashmap-get position :vertical)
-                                                 (hashmap-get position :horizontal))))
+(print-results "part 1"
+  (reduce 
+    (fn (position instruction)
+      (let (direction (get instruction :direction)
+            quantity (get instruction :quantity)
+            current (get position direction))
+        (set position direction 
+          (+ quantity current))))
+
+    {:vertical   0
+     :horizontal 0}
+
+    (get-input)))
 
 
 ; Part 2
-(let (instructions (get-input)
-      position {:vertical 0 :horizontal 0 :aim 0})
-  (map (fn (instruction)
-         (let (direction (hashmap-get instruction :direction)
-               quantity (hashmap-get instruction :quantity))
-           (if (== direction :vertical)
-             (hashmap-set position :aim (+ (hashmap-get position :aim)
-                                           quantity))
-             (do
-               (hashmap-set position :horizontal (+ (hashmap-get position :horizontal)
-                                                    quantity))
-               (hashmap-set position :vertical (+ (hashmap-get position :vertical)
-                                                  (* (hashmap-get position :aim)
-                                                     quantity)))))))
-    instructions)
-  (print "Position: " position ", combined: " (* (hashmap-get position :vertical)
-                                                 (hashmap-get position :horizontal))))
+(print-results "part 2"
+  (reduce
+    (fn (position instruction)
+      (let (direction  (get instruction :direction)
+            quantity   (get instruction :quantity)
+            
+            vertical   (get position :vertical)
+            horizontal (get position :horizontal)
+            aim        (get position :aim))
+        (if (== direction :vertical)
+          ;; Vertical Movement
+          {:vertical   vertical
+           :horizontal horizontal
+           :aim        (+ aim quantity)}
+          ;; Horizontal Movement
+          {:vertical   (+ (* aim quantity)
+                          vertical)
+           :horizontal (+ quantity 
+                          horizontal)
+           :aim        aim})))
+
+    {:vertical   0
+     :horizontal 0 
+     :aim        0}
+
+    (get-input)))

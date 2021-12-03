@@ -1,5 +1,5 @@
 (module input.02
-  (set input "
+  (declare input "
 forward 8
 forward 3
 down 8

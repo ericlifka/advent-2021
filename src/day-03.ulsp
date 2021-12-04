@@ -1,14 +1,31 @@
 (import input.03)
 
+
 (function get-input ()
-  (let (input (trim input.03/input)
-        lines (split "\n" input)
-        vectors
-          (map (fn (line)
-                 (map to-number
-                   (split "" (trim line))))
-            lines))
+  (let (input   (trim input.03/input)
+        lines   (split "\n" input)
+        vectors (map (fn (line)
+                       (map to-number
+                         (split "" (trim line))))
+                  lines))
     vectors))
+
+
+(function midway-target (vectors)
+  (* 0.5 (length vectors)))
+
+
+(function add-vectors (vectors)
+  (reduce (fn (accum vector) 
+            (matrix-add accum vector))
+    vectors))
+
+
+(function sums-to-digit (vector compare target)
+  (map (fn (digit)
+         (if (compare digit target) 1 0))
+    vector))
+
 
 (function convert-binary (vector)
   (let (vector (push vector "0b")
@@ -16,32 +33,57 @@
         number (to-number string))
     number))
 
-(function print-result (part gamma epsilon)
-  (print "part " part
-         "\n  gamma: " gamma
-         "\n  epsilon: " epsilon
-         "\n  answer: " (* gamma epsilon)
-         ))
+
+(function tally-bits (vectors compare)
+  (let (target (midway-target vectors)
+        sums   (add-vectors vectors)
+        digits (sums-to-digit sums compare target))
+    digits))
+
+
+(function filter-by-mask (digit-vectors compare)
+  (let (remaining digit-vectors
+        bit-pos   0)
+
+    (while (> (length remaining) 1)
+      (let (bits (tally-bits remaining compare)
+            mask (get bits bit-pos))
+
+        (update remaining (filter (fn (vector)
+                                    (== mask (get vector bit-pos)))
+                            remaining))
+        (++ bit-pos)))
+
+    (first remaining)))
+
+
+(declare-macro print-results (part first second)
+  `(print "part " ,part "\n"
+          "   " (quote ,first) ": " ,first "\n"
+          "   " (quote ,second) ": " ,second "\n"
+          "   answer: " (* ,first ,second)
+          "\n"))
+
 
 ;; part 1
-(let (num-vectors (get-input)
-      target (/ (length num-vectors) 2)
+(let (digit-vectors (get-input)
 
-      sum 
-        (reduce (fn (accum vector) (matrix-add accum vector))
-          num-vectors)
-
-      gamma-bin
-        (map (fn (digit)
-               (if (> digit target) 1 0))
-          sum)
-
-      epsilon-bin
-        (map (fn (digit)
-               (if (< digit target) 1 0))
-          sum)
+      gamma-bin     (tally-bits digit-vectors >)
+      epsilon-bin   (tally-bits digit-vectors <)
           
-      gamma   (convert-binary gamma-bin)
-      epsilon (convert-binary epsilon-bin))
+      gamma         (convert-binary gamma-bin)
+      epsilon       (convert-binary epsilon-bin))
 
-  (print-result "1" gamma epsilon))
+  (print-results 1 gamma epsilon))
+
+
+;; part 2
+(let (digit-vectors (get-input)
+      
+      oxygen-binary (filter-by-mask digit-vectors >=)
+      co2-binary    (filter-by-mask digit-vectors <)
+      
+      oxygen-rating (convert-binary oxygen-binary)
+      co2-rating    (convert-binary co2-binary))
+
+  (print-results 2 oxygen-rating co2-rating))

@@ -1,0 +1,47 @@
+(import input.03)
+
+(function get-input ()
+  (let (input (trim input.03/input)
+        lines (split "\n" input)
+        vectors
+          (map (fn (line)
+                 (map to-number
+                   (split "" (trim line))))
+            lines))
+    vectors))
+
+(function convert-binary (vector)
+  (let (vector (push vector "0b")
+        string (join "" vector)
+        number (to-number string))
+    number))
+
+(function print-result (part gamma epsilon)
+  (print "part " part
+         "\n  gamma: " gamma
+         "\n  epsilon: " epsilon
+         "\n  answer: " (* gamma epsilon)
+         ))
+
+;; part 1
+(let (num-vectors (get-input)
+      target (/ (length num-vectors) 2)
+
+      sum 
+        (reduce (fn (accum vector) (matrix-add accum vector))
+          num-vectors)
+
+      gamma-bin
+        (map (fn (digit)
+               (if (> digit target) 1 0))
+          sum)
+
+      epsilon-bin
+        (map (fn (digit)
+               (if (< digit target) 1 0))
+          sum)
+          
+      gamma   (convert-binary gamma-bin)
+      epsilon (convert-binary epsilon-bin))
+
+  (print-result "1" gamma epsilon))

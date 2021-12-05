@@ -1,0 +1,22 @@
+(import input.04)
+
+
+(function get-numbers-called ()
+  (map to-number 
+    (split "," input.04/numbers)))
+
+
+(function get-boards ()
+  (let (boards (split "\n\r\n" (trim input.04/boards))
+        boards (map trim boards)
+        boards (map (fn (board)
+                      (map (fn (line) 
+                             (map to-number 
+                               (filter (fn (str) (!= "" str))
+                                 (split " " (trim line)))))
+                        (split "\n" board)))
+                 boards))
+    boards))
+
+(print (get-numbers-called))
+(print (get-boards))

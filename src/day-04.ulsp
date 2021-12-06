@@ -2,8 +2,9 @@
 
 
 (function get-numbers-called ()
-  (map to-number 
-    (split "," input.04/numbers)))
+  (list-from-vector
+    (map to-number 
+      (split "," input.04/numbers))))
 
 
 (function get-boards ()
@@ -18,5 +19,91 @@
                  boards))
     boards))
 
-(print (get-numbers-called))
-(print (get-boards))
+
+(function is-row-win (board index)
+  (let (row (get board index))
+    (and (is-null (get row 0))
+         (is-null (get row 1))
+         (is-null (get row 2))
+         (is-null (get row 3))
+         (is-null (get row 4)))))
+
+
+(function is-col-win (board index)
+  (and (is-null (get (get board 0) index))
+       (is-null (get (get board 1) index))
+       (is-null (get (get board 2) index))
+       (is-null (get (get board 3) index))
+       (is-null (get (get board 4) index))))
+
+
+(function has-won (board index)
+  (cond ((is-null index) 
+         (has-won board 0))
+
+        ((> index 4)
+         false)
+
+        ((or (is-row-win board index) 
+             (is-col-win board index)) 
+         true)
+
+        (true (has-won board (+ 1 index)))))
+
+
+(function mark-board (board called)
+  (map (fn (row)
+         (map (fn (number)
+                (if (== number called)
+                  null
+                  number))
+           row))
+    board))
+
+
+(function calculate-score (board called)
+  (* called
+     (reduce (fn (accum row)
+               (+ accum 
+                  (reduce (fn (sum number)
+                            (if (is-null number)
+                              sum 
+                              (+ sum number)))
+                    0 row)))
+       0 board)))
+
+
+(function result-for-board (numbers-called)
+  (fn (board)
+    (let (counter 0
+          called  null
+          queue   numbers-called)
+      (while (not (has-won board))
+        (update called (first queue))
+        (update queue  (rest  queue))
+        (update board  (mark-board board called))
+        (++ counter))
+    
+      {:score (calculate-score board called)
+       :called called
+       :counter counter})))
+
+
+(function print-results (part obj)
+  (print "\npart " part
+         "\n   result: " obj))
+
+
+(let (numbers (get-numbers-called)
+      boards  (get-boards)
+
+      results (map (result-for-board numbers)
+                boards)
+
+      ranked  (sort (fn (e1 e2)
+                      (- (get e1 :counter)
+                         (get e2 :counter)))
+                results))
+
+  (print-results 1 (first ranked))
+  (print-results 2 (last ranked)))

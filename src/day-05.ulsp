@@ -25,15 +25,15 @@
 
 (function plot-vertical-line (matrix) 
   (fn ([[x1 y1] [x2 y2]])
-    (map (fn (y) 
-           (matrix-increment matrix x1 y))
+    (foreach (fn (y)
+               (matrix-increment matrix x1 y))
       (sequence y1 y2 true))))
 
 
 (function plot-horizontal-line (matrix)
   (fn ([[x1 y1] [x2 y2]])
-    (map (fn (x)
-           (matrix-increment matrix x y1))
+    (foreach (fn (x)
+               (matrix-increment matrix x y1))
       (sequence x1 x2 true))))
 
 
@@ -42,9 +42,9 @@
     (let (m (/ (- y2 y1)
                (- x2 x1))
           b (- y1 (* m x1)))
-      (map (fn (x)
-             (let (y (+ (* m x) b))
-               (matrix-increment matrix x y)))
+      (foreach (fn (x)
+                 (let (y (+ (* m x) b))
+                   (matrix-increment matrix x y)))
         (sequence x1 x2 true)))))
 
 

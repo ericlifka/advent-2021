@@ -1,0 +1,72 @@
+;; Day 05
+(import input.05)
+
+
+(function get-point-pairs (input)
+  ;; Hilarious split mapping garbage
+  (map (fn (line)
+         (map (fn (pair) 
+                (map to-number 
+                     (split "," pair)))
+           (split " -> " (trim line))))
+    (split "\n" (trim input))))
+
+
+(declare-macro filter-lines (collection comparison)
+  `(filter (fn ([[x1 y1] [x2 y2]])
+             ,comparison)
+     ,collection))
+
+
+(function matrix-increment (matrix x y)
+  (matrix-set-volatile matrix x y 
+    (+ 1 (matrix-get matrix x y))))
+
+
+(function plot-vertical-line (matrix) 
+  (fn ([[x1 y1] [x2 y2]])
+    (map (fn (y) 
+           (matrix-increment matrix x1 y))
+      (sequence y1 y2 true))))
+
+
+(function plot-horizontal-line (matrix)
+  (fn ([[x1 y1] [x2 y2]])
+    (map (fn (x)
+           (matrix-increment matrix x y1))
+      (sequence x1 x2 true))))
+
+
+(function plot-sloped-line (matrix)
+  (fn ([[x1 y1] [x2 y2]])
+    (let (m (/ (- y2 y1)
+               (- x2 x1))
+          b (- y1 (* m x1)))
+      (map (fn (x)
+             (let (y (+ (* m x) b))
+               (matrix-increment matrix x y)))
+        (sequence x1 x2 true)))))
+
+
+(function count-dangerous (matrix)
+  (matrix-reduce  (fn (sum vents)
+                    (if (>= vents 2) 
+                      (+ sum 1) 
+                      sum))
+    0 matrix))
+
+
+(let (point-pairs  (get-point-pairs input.05/input)
+      sea-floor    (matrix-create 1000 1000)
+
+      vertical-lines    (filter-lines point-pairs (== x1 x2))
+      horizontal-lines  (filter-lines point-pairs (== y1 y2))
+      sloped-lines      (filter-lines point-pairs
+                          (and (!= x1 x2) (!= y1 y2))))
+  
+  (map (plot-vertical-line sea-floor)   vertical-lines)
+  (map (plot-horizontal-line sea-floor) horizontal-lines)
+  (print "part 1: " (count-dangerous sea-floor))
+
+  (map (plot-sloped-line sea-floor)     sloped-lines)
+  (print "part 2: " (count-dangerous sea-floor)))

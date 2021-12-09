@@ -1,0 +1,31 @@
+;; Day 06
+(import input.06)
+
+
+(function parse-input (input)
+  (map to-number (split "," input)))
+
+
+(function bucket-fish (fish)
+  (let (buckets (matrix-create 9 1)
+        incr    (fn (i) (matrix-set-volatile buckets i 0
+                          (+ 1 (matrix-get buckets i 0)))))
+    (foreach incr fish)
+
+    (get buckets 0)))
+
+
+(function next-generation ([0s 1s 2s 3s 4s 5s 6s 7s 8s])
+  [1s 2s 3s 4s 5s 6s (+ 0s 7s) 8s 0s])
+
+
+(let (fish-start  (bucket-fish (parse-input input.06/input))
+
+      80th-gen    (reduce next-generation fish-start
+                    (sequence 80))
+
+      256th-gen   (reduce next-generation 80th-gen
+                    (sequence 176)))
+    
+    (print "part 1: " (apply + 80th-gen))
+    (print "part 2: " (apply + 256th-gen)))

@@ -1,0 +1,143 @@
+;; Day 08
+(import input.08)
+
+
+(function uniform-codes (codes)
+  (map (sort sort-ascending) 
+    codes))
+
+
+(function organize-codes (codes)
+   (uniform-codes
+    (sort (fn (one two) 
+            (- (length one)
+               (length two)))
+      codes)))
+
+
+(function get-input (input)
+  (let (lines   (split "\n" (trim input)))
+    (map (fn (line)
+           (let ([ signals 
+                   output ] (split " | " (trim line)))
+
+             {:signals (organize-codes (split " " signals))
+              :output  (uniform-codes  (split " " output))}))
+      lines)))
+
+
+(declare empty-tally 
+  {6 0   2 0   5 0   4 0   6 0   3 0   7 0})
+
+
+(function tally-sizes ({:output codes})
+  (reduce (fn (sizes code)
+            (let (len (length code))
+              (set sizes len 
+                (incr (get sizes len)))))
+    empty-tally
+    codes))
+
+
+(function tally-adder (tally1 tally2)
+  (map (fn (val key)
+         (+ val (get tally2 key)))
+    tally1))
+
+
+(function set-subtract (left right)
+  (filter (fn (char) 
+            (not (str-contains right char)))
+    left))
+
+
+(function find-three (seven len-fives)
+  (find (fn (num-code)
+          (== 0 (length (set-subtract seven num-code))))
+    len-fives))
+
+
+(function find-two-and-five (four three len-fives)
+  (let (top-left (set-subtract four three)
+        five     (find (fn (num-code)
+                         (== 0 (length
+                                 (set-subtract top-left num-code))))
+                   len-fives)
+        two      (find (fn (num-code)
+                         (and (!= num-code five) 
+                              (!= num-code three)))
+                   len-fives))
+    [two five]))
+
+
+(function find-six (one len-sixes)
+  (find (fn (num-code)
+          (== 1 (length
+                  (set-subtract one num-code))))
+    len-sixes))
+
+
+(function find-nine-and-zero (three six len-sixes)
+  (let (nine    (find (fn (num-code)
+                        (and (!= num-code six)
+                             (== 1 (length
+                                     (set-subtract num-code three)))))
+                          
+                  len-sixes)
+
+        zero    (find (fn (num-code)
+                        (and (!= num-code six)
+                             (!= num-code nine)))
+                  len-sixes))
+
+    [nine zero]))
+
+
+(function find-digits (signals)
+  (let (one      (get signals 0)
+        seven    (get signals 1)
+        four     (get signals 2)
+
+        l-fives [(get signals 3)
+                 (get signals 4)
+                 (get signals 5)]
+
+        l-sixes [(get signals 6)
+                 (get signals 7)
+                 (get signals 8)]
+
+        eight    (get signals 9)
+
+        three    (find-three seven l-fives)
+        [ two
+          five ] (find-two-and-five four three l-fives)
+
+        six      (find-six one l-sixes)
+        [ nine
+          zero ] (find-nine-and-zero three six l-sixes))
+
+    {zero 0  one 1  two   2  three 3  four 4  
+     five 5  six 6  seven 7  eight 8  nine 9}))
+
+
+(function solve-puzzle ({:signals signals :output output})
+  (let (digit-map (find-digits signals)
+        display   (map (fn (digit)
+                         (get digit-map digit))
+                    output))
+    (to-number 
+      (join "" display))))
+
+
+(let (screens    (get-input input.08/input)
+      tally-list (map tally-sizes screens)
+      totals     (reduce tally-adder tally-list)
+      outputs    (map solve-puzzle screens))
+
+  (print "uniques: " (+ (get totals 2)  ;; 1
+                        (get totals 4)  ;; 4
+                        (get totals 3)  ;; 7
+                        (get totals 7)));; 8
+
+  (print "output total: "
+    (reduce addr 0 outputs)))

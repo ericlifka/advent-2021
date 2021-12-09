@@ -1,0 +1,32 @@
+;; Day 07
+(import input.07)
+
+(function get-input (input)
+  (map to-number (split "," input)))
+
+(function calculate-fuel-consumption (target positions)
+  (reduce (fn (fuel position) (+ fuel (abs (- target position))))
+    0 positions))
+
+(function sum-sequence (start stop)
+  (let (size (abs (- start stop)))
+    (/ (* (+ 1 size) size) 2)))
+
+(function calculate-scaling-fuel-consumption (target positions)
+  (reduce (fn (fuel position)
+            (+ fuel
+               (sum-sequence position target)))
+    0 positions))
+
+(let (positions   (get-input input.07/input)
+      ordered     (sort sort-ascending positions)
+      1st-optimal (median ordered)
+      2nd-optimal (mean ordered)
+
+      1st-consumption (calculate-fuel-consumption 1st-optimal positions)
+
+      2nd-consumption (min (calculate-scaling-fuel-consumption (ceil 2nd-optimal) positions)
+                           (calculate-scaling-fuel-consumption (floor 2nd-optimal) positions)))
+
+  (print "part 1: " 1st-consumption)
+  (print "part 2: " 2nd-consumption))

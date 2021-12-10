@@ -1,0 +1,93 @@
+(import input.09)
+(import input.helpers)
+(time-function (fn (checkin)
+
+(function run-program () 
+  (let (input         (input.helpers/cleaned-up-lines input.09/input)
+        sea-floor     (input.helpers/split-lines "" input to-number)
+
+        : (checkin :parsing)
+
+        low-points    (find-low-points sea-floor)
+        
+        : (checkin :low-points)
+
+        risk-level    (reduce (fn (sum {:risk risk})
+                                (+ sum risk)) 
+                        0 low-points)
+
+        : (checkin :risk-levels)
+
+        basins        (sort sort-descending 
+                        (calculate-basin-sizes sea-floor low-points))
+
+        (1st 2nd 3rd) basins)
+
+    {:part1 risk-level
+     :part2 (* 1st 2nd 3rd)}))
+
+
+(function get-neighbors (matrix)
+  (let (getter (protected-get matrix))
+    (fn (x y)
+      (filter not-null
+        [ (getter (incr x) y)
+          (getter (decr x) y)
+          (getter x (incr y))
+          (getter x (decr y)) ]))))
+
+
+(function protected-get (matrix)
+  (let (ymax (length matrix)
+        xmax (length (get matrix 0)))
+    (fn (x y)
+      (if (or (< x 0)
+              (< y 0)
+              (>= x xmax)
+              (>= y ymax))
+        null
+        (matrix-get matrix x y)))))
+
+
+(function find-low-points (sea-floor)
+  (let (floor-height     (protected-get sea-floor)
+        neighbor-heights (get-neighbors sea-floor))
+    (matrix-reduce
+      (fn (low-points risk x y)
+        (if (> risk 0) 
+          (push low-points 
+            {:x x :y y :risk risk})
+          low-points))
+      '()
+      (matrix-create
+        (matrix-width sea-floor)
+        (matrix-height sea-floor)
+        (fn (x y)
+          (let (height (floor-height x y))
+            (if (< height 
+                   (apply min (neighbor-heights x y)))
+              (+ 1 height)
+              0)))))))
+
+
+(function calculate-basin-sizes (sea-floor low-points)
+  (let (getter (protected-get sea-floor))
+    (map (fn ({:x x :y y})
+           ((fn (([x y] ...queue))
+              (if (let (val (getter x y))
+                    (or (is-null val)
+                        (== val 9)))
+                (if (== 0 (length queue))
+                  0
+                  (+ 0 (recur queue)))
+                (do
+                  (matrix-set-volatile sea-floor x y 9)
+                  (+ 1 (recur (cons [(incr x) y]
+                              (cons [(decr x) y]
+                              (cons [x (incr y)]
+                              (cons [x (decr y)] queue)))))))))
+            (list [x y])))
+      low-points)))
+
+
+(run-program)))

@@ -1,0 +1,16 @@
+(module input.helpers
+
+(function cleaned-up-lines (input)
+  (map trim
+    (split "\n" 
+      (trim input))))
+
+
+(function split-lines (splitter lines converter)
+  (let (convertFn (or converter identity))
+    (map (fn (line) (map convertFn 
+                      (split splitter 
+                        (trim line))))
+      lines)))
+
+)

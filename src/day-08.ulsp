@@ -1,6 +1,6 @@
 ;; Day 08
 (import input.08)
-
+(time-function (fn (checkin)
 
 (function uniform-codes (codes)
   (map (sort sort-ascending) 
@@ -16,7 +16,7 @@
 
 
 (function get-input (input)
-  (let (lines   (split "\n" (trim input)))
+  (let (lines (split "\n" (trim input)))
     (map (fn (line)
            (let ([ signals 
                    output ] (split " | " (trim line)))
@@ -141,3 +141,5 @@
 
   (print "output total: "
     (reduce addr 0 outputs)))
+
+))

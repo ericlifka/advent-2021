@@ -13,4 +13,11 @@
                         (trim line))))
       lines)))
 
+
+(function number-grid (input)
+  (split-lines
+    ""
+    (cleaned-up-lines input)
+    to-number))
+
 )

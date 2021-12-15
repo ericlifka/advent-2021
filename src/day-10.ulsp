@@ -1,0 +1,62 @@
+(time-function (fn (checkpoint)
+(import input.10
+        input.helpers)
+
+
+(declare *corrupted-scores* 
+  {")" 3   "}" 1197
+   "]" 57  ">" 25137})
+
+(declare *incomplete-scores*
+  {"(" 1  "{" 3
+   "[" 2  "<" 4})
+
+
+(function run-program ()
+  (let (lines     (input.helpers/cleaned-up-lines input.10/input)
+        processed (map (fn (line)
+                         (process-line (split "" line) '())) 
+                    lines)
+                    
+        corrupted  (filter is-string processed)
+        incomplete (filter is-list processed))
+
+    {:part1
+       (reduce (fn (sum char)
+                 (+ sum (get *corrupted-scores* char)))
+         0 corrupted)
+     :part2
+       (median
+         (map (fn (queue) (score-queue queue 0))
+           incomplete)})))
+
+
+(function process-line ([char ...line] stack)
+  (cond
+    ((is-null char) stack)
+
+    ((or (== "(" char)
+         (== "{" char)
+         (== "[" char)
+         (== "<" char))
+     (process-line line (cons char stack)))
+
+    ((let (top (first stack))
+       (or (and (== ")" char) (== "(" top))
+           (and (== "}" char) (== "{" top))
+           (and (== "]" char) (== "[" top))
+           (and (== ">" char) (== "<" top))))
+     (process-line line (rest stack)))
+    
+    (:else char)))
+
+
+(function score-queue ((char ...queue) score)
+  (if (is-null char)
+    score
+    (score-queue queue
+                 (+ (* score 5)
+                    (get *incomplete-scores* char)))))
+
+
+(run-program)))

@@ -1,0 +1,103 @@
+(time-function (fn (checkin)
+
+(import (input.11 :as input)
+        (input.helpers :as helpers))
+
+(declare cells         (helpers/number-grid input/input)
+         height        (length cells)
+         width         (length (get cells 0))
+         get-cell      (matrix-protected-getter cells)
+         flashes       0
+         *flash*       10
+         *empty*       0
+         part-1-ans    null)
+
+
+(function run-program ()
+  (let (step 0)
+    (loop :while (not-all-flash)
+      (++ step)
+      (run-step)
+      (if (== 100 step)
+        (do
+          (checkin :part-1)
+          (update part-1-ans flashes))))
+    (checkin :part-2)
+    {:part1 part-1-ans
+     :part2 step}))
+
+
+(function run-step (step)
+  (increase-energy)
+
+  (loop :for ((queue (collect-all-of-value *flash*))
+              (> (length queue) 0)
+              (concat (flash-cell-at (first queue))
+                      (rest queue))))
+
+  (loop :for ((queue (collect-all-of-value (fn (c) (>= c *flash*))))
+              (> (length queue) 0)
+              (rest queue))
+    (reset (first queue)))
+  
+  (update flashes (+ flashes 
+                     (length (collect-all-of-value *empty*)))))
+
+
+(function increment (x y)
+  (let (val (get-cell x y))
+    (if (is-null val)
+      null
+      (do 
+        (matrix-set-volatile cells x y (incr val))
+        (incr val)))))
+
+
+(function reset ([x y])
+  (matrix-set-volatile cells x y *empty*))
+
+
+(function increase-energy ()
+  (loop :let (y :in (sequence (length cells)))
+    (loop :let (x :in (sequence (length (get cells y))))
+      (increment x y))))
+
+
+(function collect-all-of-value (target)
+  (let (checker (if (is-function target) target
+                  (fn (val) (== val target))))
+    (matrix-reduce (fn (accum val x y)
+                     (if (checker val)
+                       (cons [x y] accum)
+                       accum))
+      '() cells)))
+
+
+(function flash-cell-at (coord)
+  (filter (fn ([x y])
+            (== *flash* (increment x y)))
+    (neighbors-of coord)))
+
+
+(function neighbors-of ([x y])
+  (list [(incr x) y]
+        [(decr x) y]
+        [x (incr y)]
+        [x (decr y)]
+        [(incr x) (incr y)]
+        [(incr x) (decr y)]
+        [(decr x) (incr y)]
+        [(decr x) (decr y)]))
+
+
+(function not-all-flash ()
+  (not (all-flash)))
+
+
+(function all-flash ()
+  (matrix-reduce (fn (accum val) 
+                   (and accum (== val *empty*)))
+    true cells))
+
+
+(run-program)))

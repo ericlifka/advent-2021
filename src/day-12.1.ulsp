@@ -1,0 +1,78 @@
+(time-function (fn (checkin)
+
+(import (input.12 :as input)
+        (input.helpers :as helpers))
+
+
+(declare *caves* null)
+(declare *complete-paths* '())
+
+(function push-path (path)
+  (update *complete-paths* (cons path *complete-paths*)))
+
+
+(function run-program ()
+  (let (input (helpers/split-lines "-" 
+                (helpers/cleaned-up-lines input/puzzle)))
+    (update *caves* (create-cave-network input)))
+
+  (loop :for ((queue '(("start")))
+              (> (length queue) 0)
+              (let ((path ...rest) queue)
+                (concat (get-branches path) rest))))
+
+  {:number-of-paths (length *complete-paths*)})
+
+
+;; -- Path Finding --
+(function get-branches (path)
+  (let (location  (first path)
+        connected (get *caves* location))
+    (loop :let (neighbor :in connected)
+      (cond ((== neighbor "end")
+             (push-path (cons neighbor path)))
+
+            ((or (large-cave? neighbor)
+                 (not (is-in neighbor path)))
+             (collect (cons neighbor path)))))))
+
+
+;; -- Checkers --
+(function small-cave? (name)
+  (not (is-capitalized name)))
+
+(function large-cave? (name)
+  (is-capitalized name))
+
+(function is-in (item list)
+  (cond ((== 0 (length list)) false)
+        ((== item (first list)) true)
+        (:else (is-in item (rest list)))))
+
+
+;; -- Input Parsing --
+(function create-cave-network (pairs)
+  (let (caves (create-cave-nodes (get-all-caves pairs)))
+    (foreach (fn ([one two])
+               (set-volatile caves one (cons two (get caves one)))
+               (set-volatile caves two (cons one (get caves two))))
+      pairs)
+    caves))
+
+(function create-cave-nodes (names)
+  (let (caves {})
+    (loop :let (name :in names)
+      (set-volatile caves name '()))
+    caves))
+
+(function get-all-caves (pairs)
+  (remove-dupes (apply concat pairs)))
+
+(function remove-dupes ((first ...rest))
+  (if (== 0 (length rest))
+    (list first)
+    (if (is-in first rest)
+      (remove-dupes rest)
+      (cons first (remove-dupes rest)))))
+
+(run-program)))

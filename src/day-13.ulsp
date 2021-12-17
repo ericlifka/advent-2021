@@ -1,0 +1,109 @@
+(time-function (fn (checkin)
+
+(import (input.13 :as input)
+        (input.helpers :as helpers))
+
+(declare *coords* (helpers/split-lines ","
+                    (helpers/cleaned-up-lines input/puzzle.coords)
+                    to-number)
+                    
+         *folds*  (map (fn ([axis index]) { :axis  axis
+                                            :index (to-number index) })
+                    (helpers/split-lines "="
+                      (helpers/cleaned-up-lines input/puzzle.folds))))
+
+
+(function run-program ()
+  (let (matrix      (create-initial-state *coords*)
+        fold-1-count null)
+
+    (loop :let (({ :axis axis :index index }) :in *folds*)
+      (cond ((== axis "x")
+             (update matrix (fold-along-x matrix index)))
+             
+            ((== axis "y")
+             (update matrix (fold-along-y matrix index)))
+            
+            (:else (throw "unknown fold type: " axis)))
+
+      (if (is-null fold-1-count)
+        (update fold-1-count (count-dots matrix)))
+
+      (checkin :fold))
+
+    { :part1 fold-1-count
+      :part2 (print-grid matrix) }))
+
+
+;; -- matrix manipulations --
+(function fold-along-y (matrix fold-at)
+  (let (width     (matrix-height matrix)
+        height    (max fold-at 
+                       (- (decr width) fold-at))
+        transform (matrix-create width height 0)
+        set-bit   (bit-setter transform))
+
+    (loop :for ( ([x1 x2 y] [(decr fold-at) (incr fold-at) (decr height)])
+                 (>= y 0)
+                 [(decr x1) (incr x2) (decr y)] )
+      (set-bit x1 y)
+      (set-bit x2 y))
+    
+    (matrix-multiply transform matrix)))
+
+(function fold-along-x (matrix fold-at)
+  (let (height    (matrix-width matrix)
+        width     (max fold-at
+                       (- (decr height) fold-at))
+        transform (matrix-create width height 0)
+        set-bit   (bit-setter transform))
+
+    (loop :for ( ([x y1 y2] [(decr width) (decr fold-at) (incr fold-at)])
+                 (>= x 0)
+                 [(decr x) (decr y1) (incr y2)] )
+      (set-bit x y1)
+      (set-bit x y2))
+    
+    (matrix-multiply matrix transform)))
+
+(function bit-setter (matrix)
+  (let (width  (matrix-width matrix)
+        height (matrix-height matrix))
+    (fn (x y)
+      (if (and (>= x 0) (< x width)
+               (>= y 0) (< y height))
+        (matrix-set-volatile matrix x y 1)))))
+
+
+;; -- input output utilities --
+(function create-initial-state (coords)
+  (let ({ :width width 
+          :height height } (find-bounds coords)
+        matrix             (matrix-create width height))
+    
+    (loop :let (([x y]) :in coords)
+      (matrix-set-volatile matrix x y 1))
+
+    matrix))
+
+(function find-bounds (coords)
+  (let (maxX (incr (apply max (map (fn ([x y]) x) coords)))
+        maxY (incr (apply max (map (fn ([x y]) y) coords))))
+    { :width  maxX
+      :height maxY }))
+
+(function print-grid (matrix)
+  (str-add "\n\n"
+    (matrix-print matrix 1 
+      (fn (v) 
+        (if (>= v 1) "#" ".")))))
+
+(function count-dots (matrix)
+  (matrix-reduce
+    (fn (accum val)
+      (if (> val 0)
+        (incr accum)
+        accum))
+    0 matrix))
+
+(run-program)))

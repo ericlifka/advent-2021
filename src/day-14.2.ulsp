@@ -1,0 +1,69 @@
+(time-function (fn (checkin)
+
+(import (input.14 :as input)
+        (input.helpers :as helpers))
+
+(declare *template* input/puzzle.template
+         *insertion-map* (apply hashmap
+                           (apply concat
+                             (map (fn ([pair insert])
+                                    [pair [(str-add (first pair) insert) 
+                                           (str-add insert (rest pair))]])
+                               (helpers/split-lines " -> "
+                                 (helpers/cleaned-up-lines input/puzzle.insertions))))))
+
+
+(function run-program ()
+  (let (pairs  (reduce 
+                 run-step
+                 (initialize-pair-counts *template*)
+                 (sequence 40))
+        counts (count-letters pairs))
+    { :diff (- (first counts) (last counts)) }))
+
+
+(function initialize-pair-counts (template)
+  (let (len   (decr (length template))
+        pairs {})
+
+    (loop :for ((i 0) 
+                (< i len) 
+                (incr i))
+      (let (pair (str-add (get template i) 
+                          (get template (incr i))))
+        (set-volatile pairs pair 
+          (incr (or (get pairs pair) 0)))))
+    
+    pairs))
+
+
+(function run-step (counts)
+  (let (new-counts {})
+    (loop :let ((count pair) :in counts)
+      (loop :let (child :in (get *insertion-map* pair))
+        (set-volatile new-counts child
+          (+ count 
+             (or (get new-counts child) 0)))))
+    
+    new-counts))
+
+
+(function count-letters (counts)
+  (let (letters {})
+    (loop :let ((count pair) :in counts)
+      (foreach (fn (letter)
+                 (set-volatile letters letter
+                   (+ count 
+                     (or (get letters letter) 0))))
+        (split "" pair)))
+    
+    (sort sort-descending
+      (map (fn (count letter)
+             (if (or (== letter (first *template*))
+                     (== letter (last  *template*)))
+                (/ (incr count) 2)
+                (/ count 2)))
+        letters))))
+
+
+(run-program)))

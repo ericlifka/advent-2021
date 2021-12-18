@@ -1,0 +1,56 @@
+(time-function (fn (checkin)
+
+(import (input.14 :as input)
+        (input.helpers :as helpers))
+
+(declare *template* input/puzzle.template
+         *insertion-map* (apply hashmap
+                           (apply concat 
+                             (map (fn ([pair insert])
+                                    [pair (str-add (first pair) insert (rest pair))])
+                               (helpers/split-lines " -> "
+                                 (helpers/cleaned-up-lines input/puzzle.insertions))))))
+
+
+(function run-program ()
+  (let (result (run-for-n 10 *template*)
+        counts (sort (fn (c1 c2) 
+                       (- c2 c1))
+                 (tabulate result)))
+    { :length (length result)
+      :diff (- (first counts) (last counts)) }))
+
+
+(declare-memoized run-for-n (n template)
+  (cond ((and (<= n 1) (== 2 (length template)))
+         (or (get *insertion-map* template) template))
+         
+        ((== 2 (length template))
+         (run-for-n 1 (run-for-n (decr n) template)))
+
+        (:else (rejoin
+                 (map (fn (pair) 
+                        (run-for-n n pair))
+                   (split-pairs template))))))
+
+
+(function split-pairs (template)
+  (let (len (decr (length template)))
+    (loop :for ((i 0) 
+                (< i len) 
+                (incr i))
+      (collect (str-add (get template i) (get template (incr i)))))))
+
+
+(function rejoin (strs)
+  (join "" (push (map rest strs) (first (first strs)))))
+
+
+(function tabulate (str)
+  (let (counts {})
+    (loop :let (ch :in str)
+      (set-volatile counts ch (incr (or (get counts ch) 0))))
+    counts))
+
+
+(run-program)))

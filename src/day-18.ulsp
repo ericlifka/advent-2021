@@ -1,0 +1,140 @@
+(time-function (fn (checkin) 
+
+(import (input.18 :as input)
+        (input.helpers :as helpers))
+
+(declare *input*   input/puzzle
+         *numbers* (map (fn (code) (eval code)) 
+                     (map read 
+                       (split "\n" (join " " (split "," (trim *input*)))))))
+
+(function run-program ()
+  (let (part1 
+        (magnitude (reduce add *numbers*))
+
+        : (checkin :part1)
+
+        sums
+        (loop :let (i :in (sequence 0 (decr (length *numbers*))))
+          (let (_collect collect ; hack for the inner loop overwriting this helper
+                outer (get *numbers* i))
+
+            (checkin i)
+            (loop :let (j :in (sequence (incr i) (length *numbers*)))
+              (let (inner (get *numbers* j))
+                (_collect (add inner outer))
+                (_collect (add outer inner))))))
+
+        : (checkin :calculated-sums)
+
+        sorted
+        (sort sort-descending (map magnitude sums))
+
+        : (checkin :calculated-magnitudes))
+
+    { :part1 part1
+      :part2 (first sorted) }))
+
+(function add (n1 n2) 
+  (let (num [(copy-num n1) 
+             (copy-num n2)]
+        needs-to-reduce true)
+    (loop :while needs-to-reduce
+      (cond ((explode-first num '()) null)
+            ((split-first num) null)
+            (:else (update needs-to-reduce false))))
+    num))
+
+(function explode-first (num stack)
+  (cond ((is-number num)
+         false)
+         
+        ((< (length stack) 4)
+         (or (explode-first (first num)  (cons { :n num :i 0 } stack))
+             (explode-first (second num) (cons { :n num :i 1 } stack))))
+             
+        (:else 
+         (do (explode-left  (first num)  stack)
+             (explode-right (second num) stack)
+             (let ({ :n n :i i } (first stack))
+               (set* n i 0))))))
+
+(function explode-left (num stack)
+  (cond
+    ((== 0 (length stack)) ; stack ran out so there's nothing to add it to
+     null)
+
+    ((== 0 (get (first stack) :i)) ; walking up until the first branch left
+     (explode-left num (rest stack)))
+
+    ((is-number (first (get (first stack) :n))) ; first left branch is a number
+     (let ({ :n parent } (first stack)
+           original-val  (get parent 0)) 
+       (set* parent 0 (+ num original-val))))
+
+    (:else ; found left branch
+     (let ({ :n parent } (first stack)
+           target        (first parent))
+       (loop :while (is-vector (second target)) ; walk down right branches to first number
+         (update target (second target)))
+       (set* target 1 (+ num (second target)))))))
+
+(function explode-right (num stack)
+  (cond
+    ((== 0 (length stack)) ; stack ran out so there's nothing to add it to
+     null)
+
+    ((== 1 (get (first stack) :i)) ; walking up until the first branch right
+     (explode-right num (rest stack)))
+
+    ((is-number (second (get (first stack) :n))) ; first right branch is a number
+     (let ({ :n parent } (first stack)
+           original-val  (get parent 1)) 
+       (set* parent 1 (+ num original-val))))
+
+    (:else ; found right branch
+     (let ({ :n parent } (first stack)
+           target        (second parent))
+       (loop :while (is-vector (first target)) ; walk down left branches to first number
+         (update target (first target)))
+       (set* target 0 (+ num (first target)))))))
+
+(function split-first (num)
+  (let (left  (first num)
+        right (second num))
+        
+    (cond ((and (is-number left)
+                (>= left 10))
+           (do (set* num 0 (split-num left))
+               true))
+          
+          ((and (is-vector left)
+                (split-first left))
+           true)
+        
+          ((and (is-number right)
+                (>= right 10))
+           (do (set* num 1 (split-num right))
+               true))
+           
+          ((and (is-vector right)
+                (split-first right))
+           true)
+           
+          (:else false))))
+
+(function split-num (num)
+  [ (floor (/ num 2))
+    (ceil  (/ num 2)) ])
+
+(function magnitude (num)
+  (if (is-number num) num
+    (+ (* 3 (magnitude (first num)))
+       (* 2 (magnitude (second num))))))
+
+(function copy-num (num)
+  (if (is-number num)
+      num
+      [ (copy-num (first num)) (copy-num (second num)) ]))
+
+(run-program)))

@@ -1,0 +1,53 @@
+(time-function (fn (checkin) 
+
+(import (input.20 :as input)
+        (input.helpers :as helpers))
+
+(declare digit-to-num (fn (char) (if (== char "#") 1 0))
+         num-to-digit (fn (num) (if num "#" "."))
+         map-digit    (map digit-to-num)
+
+         *algorithm*  (map-digit (split "" input/algorithm.puzzle))
+         *image*      (helpers/split-lines "" digit-to-num 
+                        (helpers/cleaned-up-lines input/image.puzzle)))
+
+(function run-program ()
+  (let (image *image*)
+    (loop :let (i :in (sequence 50))
+      (update image (process-image image (% i 2)))
+      (checkin i))
+    { :part2 (matrix-reduce addr 0 image) }))
+
+(function process-image (image infinity-bit)
+  (let (lookup (infinite-getter image infinity-bit))
+    (matrix-create 
+      (+ 2 (matrix-width image))
+      (+ 2 (matrix-height image))
+      (fn (x y)
+        (let (grid  (map lookup (neighbors x y))
+              value (get *algorithm* (to-index grid)))
+          value)))))
+
+(function to-index (arr)
+  (reduce (fn (total digit)
+            (+ (* 2 total) digit))
+     0 arr))
+
+(function neighbors (_x _y)
+  (let (x (decr _x)   x-1 (decr x)   x+1 (incr x)
+        y (decr _y)   y-1 (decr y)   y+1 (incr y))
+
+    [ [x-1 y-1] [ x  y-1] [x+1 y-1]
+      [x-1  y ] [ x   y ] [x+1  y ]
+      [x-1 y+1] [ x  y+1] [x+1 y+1] ]))
+
+(function infinite-getter (image infinity-bit)
+  (let (width (matrix-width image)
+        height (matrix-height image))
+    (fn ([x y])
+      (if (or (< x 0) (< y 0)
+              (>= x width) (>= y height))
+        infinity-bit
+        (matrix-get image x y)))))
+
+(run-program)))

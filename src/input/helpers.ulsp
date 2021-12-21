@@ -6,7 +6,7 @@
       (trim input))))
 
 
-(function split-lines (splitter lines converter)
+(function split-lines (splitter converter lines)
   (let (convertFn (or converter identity))
     (map (fn (line) (map convertFn 
                       (split splitter 

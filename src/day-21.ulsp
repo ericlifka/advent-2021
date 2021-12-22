@@ -1,0 +1,98 @@
+(time-function (fn (checkin) 
+
+(import (input.21 :as input))
+
+
+;; Part 1
+(declare *roll-counter* 0
+         *die* '())
+
+(function roll-die ()
+  (++ *roll-counter*)
+  (if (== 0 (length *die*))
+    (update *die* (sequence 1 100 1 true)))
+  (let ((roll ...rest) *die*)
+    (update *die* rest)
+    roll))
+
+(function part-1 ()
+  (let (positions input/positions.puzzle
+        scores [0 0]
+        turn -1)
+    (loop :while (< (apply max scores) 1000)
+      (let (player (% (++ turn) 2)
+            r1 (roll-die) r2 (roll-die) r3 (roll-die))
+        (set* positions player 
+          (% (+ (get positions player) r1 r2 r3) 10))
+        (set* scores player
+          (+ (get scores player) (or (get positions player) 10)))))
+
+    { :part1 (* *roll-counter* (apply min scores)) }))
+
+
+;; Part 2
+
+; 2 3 4 5 6
+; 1 2 3 2 1
+
+(declare *rolls* [ [2 1]
+                   [3 2]
+                   [4 3]
+                   [5 2]
+                   [6 1] ])
+
+(function += (obj key value)
+  (set* obj key (+ value (or (get obj key) 0))))
+
+(function take-turn (positions)
+  (let (next {}
+        finished 0)
+    (foreach (fn (pos-count [pos score])
+               (foreach (fn ([movement roll-count])
+                          (let (new-pos   (% (+ pos movement) 10)
+                                new-score (+ score (or new-pos 10))
+                                new-count (* pos-count roll-count))
+                            (if (< new-score 21)
+                              (+= next [new-pos new-score] new-count)
+                              (update finished (+ finished new-count)))))
+                 *rolls*))
+      positions)
+    [next finished]))
+
+(function paths-to-finish (start)
+  (let (current { [start 0] 1 })
+    (loop :for ( (i 1) (> (length current) 0) (incr i) )
+      (let ([next finished] (take-turn current))
+        (update current next)
+        (collect [i finished (reduce addr 0 next)])))))
+
+(function how-many-p1-wins (p1-finishes p2-finishes)
+  (loop :let (([turn finished unfinished]) :in p1-finishes)
+    (if finished
+      (let (p2-open-paths (third (get p2-finishes (- turn 2))))
+        (print turn ", p1 finishes: " finished ", p2 ongoing: " p2-open-paths ", won in " (* finished p2-open-paths) " universes")
+        (collect (* finished p2-open-paths))))))
+
+(function how-many-p2-wins (p1-finishes p2-finishes)
+  (loop :let (([turn finished unfinished]) :in p2-finishes)
+    (if finished
+      (let (p1-status (get p1-finishes (- turn 1))
+            p1-open-paths (if p1-status (third p1-status) 0)
+            won-in (* finished p1-open-paths))
+        (print turn " - p2 finishes: " finished ", p1 ongoing: " p1-open-paths ", won in " won-in)
+        (collect won-in)))))
+
+(function run-program ()
+  (let (p1 (paths-to-finish (first input/positions.sample))
+        p2 (paths-to-finish (second input/positions.sample)))
+    (print "p1: " p1)
+    (print "p2: " p2)
+    (print "p1 wins: " 
+      (reduce addr 0
+        (how-many-p1-wins p1 p2)))
+    (print "p2 wins: " 
+      (reduce addr 0
+        (how-many-p2-wins p1 p2))))
+  { :part1 (part-1) })
+
+(run-program)))

@@ -1,0 +1,4 @@
+(module input.21
+(declare positions.sample [4 8])
+(declare positions.puzzle [7 1])
+)

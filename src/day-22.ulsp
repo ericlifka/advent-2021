@@ -1,11 +1,52 @@
-(time-function (fn (checkin) 
+(time-function (fn (checkin)
 
 (import (input.22 :as input)
         (input.helpers :as helpers))
 
 
+(function run-program ()
+  (let (input-boxes   (parse-input input/puzzle)
+        part-1-copy   null
+        plotted-boxes {})
+    
+    ;; go through boxes specified in input
+    (loop :let ((input-box i) :in input-boxes)
+
+      (if (== i 20)
+        (update part-1-copy (copy plotted-boxes)))
+
+      ;; compare against each plotted box
+      (loop :let ((count existing-box) :in (copy plotted-boxes))
+        ;; If there's an intersection between the input box and a previously plotted box
+        ;; then add the intersection as a new plotted box, with a value inverse of the overlapped
+        ;; box. In the case of a positive box, it counteracts the double up, for a negative box it
+        ;; acts as the cutaway.
+        (let (overlap (intersection existing-box input-box))
+          (if overlap
+            (do (let ({ :x x :y y :z z } overlap
+                      key { :x x :y y :z z :toggle (not (get existing-box :toggle)) }
+                      old-count (or (get plotted-boxes key) 0))
+              (set* plotted-boxes key (+ count old-count)))))))
+
+      ;; For positive input boxes, add the box as a plotted box
+      (if (get input-box :toggle)
+        (set* plotted-boxes input-box 1))
+
+      (checkin i))
+
+    { :part1 (tally-volumes part-1-copy)
+      :part2 (tally-volumes plotted-boxes) }))
+
+;; -- Input parsing --
+(function parse-input (input)
+  (map box-from-input
+    (helpers/split-lines
+      (regex "[ ,]")
+        (helpers/cleaned-up-lines input))))
+
 (function range-from-input (input)
-  (map to-number (split ".." (get (split "=" input) 1))))
+  (map to-number 
+    (split ".." (second (split "=" input)))))
 
 (function box-from-input ([toggle x y z])
   { :toggle (== toggle "on")
@@ -13,66 +54,31 @@
     :y (range-from-input y)
     :z (range-from-input z) })
 
-(declare *boxes* (map box-from-input
-                   (helpers/split-lines
-                     (regex "[ ,]")
-                     (helpers/cleaned-up-lines input/puzzle))))
-(declare *counter* 0)
-
-(function toggle-boxes ([box ...remaining] previous total-volume)
-  (let (volume          (calc-volume box)
-        overlapped      (intersect-all box previous)
-        not-overlapped  (- volume overlapped)
-        new-volume      (if (get box :toggle)
-                          (+ total-volume not-overlapped)
-                          (- total-volume overlapped)))
-    (print (if (get box :toggle) "on  " "off ") 
-    "- volume-affected: " (if (get box :toggle) not-overlapped overlapped) 
-    ", of total volume: " volume)
-    (checkin (++ *counter*))
-    
-    (if (== (length remaining) 0)
-      new-volume
-      (toggle-boxes 
-        remaining 
-        (add-to-end previous box)
-        new-volume))))
-
-(function intersect-all (box others)
-  (let (overlap (reduce (fn (intersections other-box)
-                          (intersection box other-box intersections))
-                  {} others))
-
-    (reduce (fn (total toggle)
-              (if toggle
-                (incr total)
-                total))
-      0 overlap)))
-
+;; -- Box Processing --
 (function intersection ({ :x [b1xmin b1xmax] :y [b1ymin b1ymax] :z [b1zmin b1zmax] } 
-                        { :x [b2xmin b2xmax] :y [b2ymin b2ymax] :z [b2zmin b2zmax] :toggle toggle } previous)
+                        { :x [b2xmin b2xmax] :y [b2ymin b2ymax] :z [b2zmin b2zmax] })
   (let (x-min (max b1xmin b2xmin) x-max (min b1xmax b2xmax)
         y-min (max b1ymin b2ymin) y-max (min b1ymax b2ymax)
-        z-min (max b1zmin b2zmin) z-max (min b1zmax b2zmax)
-        intersection (or previous {}))
+        z-min (max b1zmin b2zmin) z-max (min b1zmax b2zmax))
     (if (and (>= x-max x-min)
              (>= y-max y-min)
              (>= z-max z-min))
-      (loop :let (x :in (sequence x-min (incr x-max)))
-        (loop :let (y :in (sequence y-min (incr y-max)))
-          (loop :let (z :in (sequence z-min (incr z-max)))
-            (set* intersection [x y z] toggle)))))
-    
-    intersection))
+      { :x [x-min x-max]
+        :y [y-min y-max]
+        :z [z-min z-max] })))
 
-(function calc-volume ({ :x [xmin xmax] :y [ymin ymax] :z [zmin zmax] })
+(function tally-volumes (plotted-boxes)
+  (reduce (fn (total count box)
+                (+ total (* count (calc-volume box))))
+    0 plotted-boxes))
+
+(function calc-volume ({ :x [xmin xmax] :y [ymin ymax] :z [zmin zmax] :toggle toggle })
   (* (incr (abs (- xmax xmin)))
      (incr (abs (- ymax ymin)))
-     (incr (abs (- zmax zmin)))))
+     (incr (abs (- zmax zmin)))
+     (if toggle 1 -1)))
 
-(function run-program ()
-  (foreach (fn (box) (print box)) *boxes*)
-
-  (print (toggle-boxes *boxes* [] 0)))
+(function copy (hash)
+  (filter (fn () true) hash))
 
 (run-program)))
